@@ -18,15 +18,20 @@ and reviews everything before committing.
 
 ## AI Bridge routing
 
-The workspace's `ANTHROPIC_BASE_URL`/`ANTHROPIC_API_KEY` point at
-`coder-demo-eks`'s AI Bridge instead of Anthropic directly — the real
-Anthropic key never reaches the workspace, and every Claude Code call is
-centrally logged. The Coder API token used for this is baked in at
-template-push time (one Terraform variable, same value for every workspace
-built from a given template version) — not a per-developer parameter. Every
-workspace on that version shares one AI Bridge identity; fine for a
-single-operator demo, but AI Bridge logs won't distinguish between developers
-if this is ever used by more than one person.
+The workspace's `ANTHROPIC_BASE_URL`/`ANTHROPIC_AUTH_TOKEN` point Claude Code
+at `coder-demo-eks`'s AI Bridge, which routes to Amazon Bedrock via that
+repo's own IRSA role — no Anthropic key of any kind ever reaches the
+workspace, and every call is centrally logged. **Requires `coder-demo-eks`
+running Coder ≥ v2.36.5** — earlier versions don't know `claude-sonnet-5`
+needs the newer "adaptive" thinking schema and let requests through
+unconverted, which Bedrock then rejects.
+
+The Coder API token used for AI Bridge auth is baked in at template-push time
+(one Terraform variable, same value for every workspace built from a given
+template version) — not a per-developer parameter. Every workspace on that
+version shares one AI Bridge identity; fine for a single-operator demo, but
+logs won't distinguish between developers if this is ever used by more than
+one person.
 
 ## Branching
 
@@ -59,8 +64,9 @@ resource for provisioning an ephemeral workspace or streaming its logs.
 
 ## Prerequisites
 
-- `coder-demo-eks` deployed (`task infra` → `task coder` → `task init`) and its
-  port-forward running (`task port-forward` in that repo) — Coder's
+- `coder-demo-eks` deployed (`task infra` → `task coder` → `task init`),
+  running Coder ≥ v2.36.5 (see [AI Bridge routing](#ai-bridge-routing)), with
+  its port-forward running (`task port-forward` in that repo) — Coder's
   LoadBalancer is internal-only, so this repo talks to it over
   `http://localhost:8080`.
 - `coder`, `terraform`, `go-task`, `shellcheck` installed locally.
