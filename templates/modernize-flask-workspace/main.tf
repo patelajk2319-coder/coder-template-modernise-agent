@@ -169,8 +169,11 @@ resource "coder_agent" "main" {
     # Set at the agent level (not exported in the startup script) so it's present
     # in every terminal/code-server session the developer opens, not just the
     # one-shot startup script process.
-    ANTHROPIC_BASE_URL   = "${data.coder_workspace.me.access_url}/api/v2/aibridge/anthropic/"
-    ANTHROPIC_API_KEY    = var.coder_api_token
+    ANTHROPIC_BASE_URL = "${data.coder_workspace.me.access_url}/api/v2/aibridge/anthropic"
+    # ANTHROPIC_AUTH_TOKEN (-> Authorization: Bearer), not ANTHROPIC_API_KEY
+    # (-> x-api-key, reserved for a real Anthropic/BYOK key) — centralized
+    # mode per docs/ai-coder/ai-gateway/clients/claude-code.md.
+    ANTHROPIC_AUTH_TOKEN = var.coder_api_token
     CODER_WORKSPACE_NAME = data.coder_workspace.me.name
   }
 
